@@ -1,1 +1,6 @@
 .env
+*__pycache__
+*venv
+logs/*
+scratch/*
+.DS_Store

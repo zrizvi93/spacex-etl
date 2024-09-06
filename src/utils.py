@@ -31,11 +31,15 @@ class File:
   def __create_dataframe(self, rdd, schema):
     spark_dataframe = self.spark.createDataFrame(self.rdd, schema=self.schema)
     return spark_dataframe
-
+  
   def __validate_dataframe(self):
     dataframe = self.dataframe
-    validate = self.validators
+    validators = self.validators
     quality_check = True
+    for check in validators:
+      result = check(dataframe)
+      if not result:
+         quality_check = False
     return quality_check
 
   def write_to_s3(self, aws_access_key_id: str, aws_secret_access_key: str, aws_session_token: str = None):

@@ -13,13 +13,22 @@ from config import CONFIG as Config
 from constants import DATE_RANGE_TEMPLATE
 from utils import File, parse_iso_format
 
-spark = SparkSession.builder.appName("LaunchesDataExtraction").getOrCreate()
+spark = SparkSession.builder.appName("LaunchesDataExtractionTest").getOrCreate()
 sc = spark.sparkContext
 
 hadoop_conf = spark.sparkContext._jsc.hadoopConfiguration()
 hadoop_conf.set("fs.s3a.access.key", Config.aws_access_key)
 hadoop_conf.set("fs.s3a.secret.key", Config.aws_secret_key)
 hadoop_conf.set("fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+
+
+parser = argparse.ArgumentParser(description="Launches ETL job")
+parser.add_argument('--start_date', required=True, help='The start date for the ETL job')
+parser.add_argument('--env', required=True)
+
+args = parser.parse_args()
+start_date = args.start_date
+env = args.env
 
 class Launch:
     def __init__(self, data, day_utc):
@@ -131,7 +140,7 @@ def process_launches(start_date: str = "", incremental: bool = False):
     
   return results
 
-def create_file(launches, start_date: str = ""):
+def create_file(launches, env, start_date: str = ""):
   launch_schema = StructType([
       StructField("fairings", StringType(), nullable=True),
       StructField("links", StringType(), nullable=True),
@@ -163,23 +172,15 @@ def create_file(launches, start_date: str = ""):
       StructField("day_utc", StringType(), nullable=True)
       ])
   
-  file = File(spark, sc, result=launches[0], schema=launch_schema, s3loc="s3://anduril-takehome/launches/", overwrite_partition_where=start_date)
+  file = File(spark, sc, result=launches[0], schema=launch_schema, s3loc=f"s3://anduril-takehome/{env}/launches/{start_date}", overwrite_partition_where=start_date)
   return file
 
 
-parser = argparse.ArgumentParser(description="Launches ETL job")
-parser.add_argument("--start_date", required=True, help="The start date for the ETL job")
-args = parser.parse_args()
-start_date = args.start_date
 
 # If we have an incremental batch job that writes this data to S3, we are going to upload the data in partitions. Sample code:
 launches = process_launches(start_date = start_date, incremental = True)
-file = create_file(launches)
+file = create_file(launches, env, start_date)
 df = file.dataframe
 df.show()
 # file.overwrite_partition()
 
-
-
-
-  

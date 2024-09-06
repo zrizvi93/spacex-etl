@@ -1,5 +1,9 @@
 apache-airflow==2.9.3
 apache-airflow-providers-apache-spark==4.9.0
+dbt-core==1.8.5
+dbt-spark==1.8.0
+dbt-spark[PyHive]
 pyspark==3.5.1
 pytest==8.3.2
 requests==2.32.3
+dbt-postgres==1.8.2
