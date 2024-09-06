@@ -50,5 +50,4 @@ def process_ships():
 
 
 ships = process_ships()
-
 # unfinished
